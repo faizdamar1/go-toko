@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -36,9 +37,14 @@ func (server *Server) Inisialize(appConfig AppConfig, dbConfig DBConfig) {
 	fmt.Println("welcome to " + appConfig.AppName)
 
 	var err error
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", dbConfig.DBUser, dbConfig.DBPassword, dbConfig.DBHost, dbConfig.DBPort, dbConfig.DBName)
 
-	server.DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if dbConfig.DBDriver == "mysql" {
+		dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", dbConfig.DBUser, dbConfig.DBPassword, dbConfig.DBHost, dbConfig.DBPort, dbConfig.DBName)
+		server.DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	} else {
+		dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Jakarta", dbConfig.DBHost, dbConfig.DBUser, dbConfig.DBPassword, dbConfig.DBName, dbConfig.DBPort)
+		server.DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	}
 
 	if err != nil {
 		log.Panic(err.Error())
@@ -84,6 +90,7 @@ func Run() {
 	dbConfig.DBUser = getEnv("DB_USER", "dbuser")
 	dbConfig.DBPassword = getEnv("DB_PASS", "")
 	dbConfig.DBPort = getEnv("DB_PORT", "3306")
+	dbConfig.DBDriver = getEnv("DB_DRIVER", "mysql")
 
 	server.Inisialize(appConfig, dbConfig)
 	server.Run(":" + appConfig.AppPort)
