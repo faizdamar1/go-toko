@@ -36,8 +36,12 @@ type DBConfig struct {
 func (server *Server) Inisialize(appConfig AppConfig, dbConfig DBConfig) {
 	fmt.Println("welcome to " + appConfig.AppName)
 
-	var err error
+	server.InisializeDb(dbConfig)
+	server.inisializeRoutes()
+}
 
+func (server *Server) InisializeDb(dbConfig DBConfig) {
+	var err error
 	if dbConfig.DBDriver == "mysql" {
 		dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", dbConfig.DBUser, dbConfig.DBPassword, dbConfig.DBHost, dbConfig.DBPort, dbConfig.DBName)
 		server.DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
@@ -52,9 +56,16 @@ func (server *Server) Inisialize(appConfig AppConfig, dbConfig DBConfig) {
 		fmt.Println("Connected to DB")
 	}
 
-	server.Router = mux.NewRouter()
+	for _, model := range RegisterModels() {
+		err = server.DB.Debug().AutoMigrate(model.Model)
 
-	server.inisializeRoutes()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	fmt.Println("Migrate successfull")
+
 }
 
 func (server *Server) Run(addr string) {
