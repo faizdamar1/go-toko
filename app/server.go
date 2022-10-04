@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/faizdamar1/go-toko/database/seeders"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
@@ -38,6 +39,7 @@ func (server *Server) Inisialize(appConfig AppConfig, dbConfig DBConfig) {
 
 	server.InisializeDb(dbConfig)
 	server.inisializeRoutes()
+	seeders.DBSeed(server.DB)
 }
 
 func (server *Server) InisializeDb(dbConfig DBConfig) {
