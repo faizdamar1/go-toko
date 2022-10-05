@@ -27,6 +27,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/unrolled/render v1.5.0 // indirect
+	github.com/urfave/cli v1.22.10
 	github.com/urfave/cli/v2 v2.17.1 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
