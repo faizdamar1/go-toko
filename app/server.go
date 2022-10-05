@@ -36,6 +36,18 @@ type DBConfig struct {
 	DBDriver   string
 }
 
+func (server *Server) dbMigrate() {
+	for _, model := range RegisterModels() {
+		err := server.DB.Debug().AutoMigrate(model.Model)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	fmt.Println("Migrate successfull")
+}
+
 func (server *Server) initCommands(config AppConfig, dbConfig DBConfig) {
 	server.InitializeDB(dbConfig)
 
@@ -91,18 +103,6 @@ func (server *Server) InitializeDB(dbConfig DBConfig) {
 	} else {
 		fmt.Println("Connected to DB")
 	}
-}
-
-func (server *Server) dbMigrate() {
-	for _, model := range RegisterModels() {
-		err := server.DB.Debug().AutoMigrate(model.Model)
-
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	fmt.Println("Migrate successfull")
 }
 
 func (server *Server) Run(addr string) {

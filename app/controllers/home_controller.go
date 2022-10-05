@@ -1,10 +1,18 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
+
+	"github.com/unrolled/render"
 )
 
 func Home(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Welcome to gotoko homepage")
+	render := render.New(render.Options{
+		Layout: "layout",
+	})
+
+	_ = render.HTML(w, http.StatusOK, "home", map[string]interface{}{
+		"title": "Home title",
+		"body":  "Home body",
+	})
 }
