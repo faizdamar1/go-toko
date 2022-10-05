@@ -1,6 +1,7 @@
 package app
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"github.com/faizdamar1/go-toko/database/seeders"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
+	"github.com/urfave/cli/v2"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -34,15 +36,47 @@ type DBConfig struct {
 	DBDriver   string
 }
 
-func (server *Server) Inisialize(appConfig AppConfig, dbConfig DBConfig) {
-	fmt.Println("welcome to " + appConfig.AppName)
+func (server *Server) initCommands(config AppConfig, dbConfig DBConfig) {
+	server.InitializeDB(dbConfig)
 
-	server.InisializeDb(dbConfig)
-	server.inisializeRoutes()
-	seeders.DBSeed(server.DB)
+	cmdApp := &cli.App{
+		Commands: []*cli.Command{
+			{
+				Name:    "db:migrate",
+				Aliases: []string{"a"},
+				Usage:   "make a migration database",
+				Action: func(cCtx *cli.Context) error {
+					server.dbMigrate()
+					return nil
+				},
+			},
+			{
+				Name:    "db:seed",
+				Aliases: []string{"a"},
+				Usage:   "make a seed to database",
+				Action: func(cCtx *cli.Context) error {
+					err := seeders.DBSeed(server.DB)
+
+					if err != nil {
+						log.Fatal(err)
+					}
+					return nil
+				},
+			},
+		}}
+
+	if err := cmdApp.Run(os.Args); err != nil {
+		log.Fatal(err)
+	}
+
 }
 
-func (server *Server) InisializeDb(dbConfig DBConfig) {
+func (server *Server) Inisialize(appConfig AppConfig, dbConfig DBConfig) {
+	fmt.Println("welcome to " + appConfig.AppName)
+	server.inisializeRoutes()
+}
+
+func (server *Server) InitializeDB(dbConfig DBConfig) {
 	var err error
 	if dbConfig.DBDriver == "mysql" {
 		dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", dbConfig.DBUser, dbConfig.DBPassword, dbConfig.DBHost, dbConfig.DBPort, dbConfig.DBName)
@@ -57,9 +91,11 @@ func (server *Server) InisializeDb(dbConfig DBConfig) {
 	} else {
 		fmt.Println("Connected to DB")
 	}
+}
 
+func (server *Server) dbMigrate() {
 	for _, model := range RegisterModels() {
-		err = server.DB.Debug().AutoMigrate(model.Model)
+		err := server.DB.Debug().AutoMigrate(model.Model)
 
 		if err != nil {
 			log.Fatal(err)
@@ -67,7 +103,6 @@ func (server *Server) InisializeDb(dbConfig DBConfig) {
 	}
 
 	fmt.Println("Migrate successfull")
-
 }
 
 func (server *Server) Run(addr string) {
@@ -105,6 +140,14 @@ func Run() {
 	dbConfig.DBPort = getEnv("DB_PORT", "3306")
 	dbConfig.DBDriver = getEnv("DB_DRIVER", "mysql")
 
-	server.Inisialize(appConfig, dbConfig)
-	server.Run(":" + appConfig.AppPort)
+	flag.Parse()
+	arg := flag.Arg(0)
+
+	if arg != "" {
+		server.initCommands(appConfig, dbConfig)
+	} else {
+		server.Inisialize(appConfig, dbConfig)
+		server.Run(":" + appConfig.AppPort)
+	}
+
 }
