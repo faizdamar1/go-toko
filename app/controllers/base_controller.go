@@ -84,6 +84,7 @@ func (server *Server) InitCommands(config AppConfig, dbConfig DBConfig) {
 
 func (server *Server) Initialize(appConfig AppConfig, dbConfig DBConfig) {
 	fmt.Println("welcome to " + appConfig.AppName)
+	server.InitializeDB(dbConfig)
 	server.initializeRoutes()
 }
 
